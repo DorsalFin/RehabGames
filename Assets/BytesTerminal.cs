@@ -210,8 +210,8 @@ public class BytesTerminal : MonoBehaviour
                             arm.transform.localRotation = diff2;
 
                             // don't want to increase max angle in hockey or pop pop
-                            if (currentAngle > maxAngle && (Hockey.Instance == null || PopManager.instance != null))
-                                maxAngle = currentAngle;
+                            //if (currentAngle > maxAngle && (Hockey.Instance == null || PopManager.instance != null))
+                            //    maxAngle = currentAngle;
 
                             // if there is a gamemmanger in scene, it means we're acting on input
                             if (GameManager.Instance != null)
