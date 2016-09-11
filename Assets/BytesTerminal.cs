@@ -8,12 +8,13 @@ public class BytesTerminal : MonoBehaviour
     public static BytesTerminal Instance;
 
     public GameObject q1, q2, q3, qdiff2;
-    public GameObject arm;
-    //public Text tcal;
-    Quaternion qq1, qq2, qq1_0, qq2_0, diff1, qq3, diff2, qqzero;
+    public GameObject arm, toparm, sp;
+    public Text Angletext;
+    Quaternion qq1, qq2, qq1_0, qq2_0, qq3, diff2, qqzero, qmin, qmax;
     bool ifcal;
+    float currentAngle = 0f;
     /// 
-    Vector3 axold;
+    Vector3 v3min, v3max, v3cur, v3cur_;
     Vector3 point;
     float angold;
 
@@ -21,7 +22,7 @@ public class BytesTerminal : MonoBehaviour
 
     // for result data
     public float minAngle = 0f;
-    public float maxAngle;
+    public float maxAngle = 0f;
     public List<float> thisGamesFrequencies = new List<float>();
     public List<float> thisGamesMaxAngles = new List<float>();
 
@@ -68,7 +69,7 @@ public class BytesTerminal : MonoBehaviour
         qqzero.x = qqzero.y = qqzero.z = 0;
         ifcal = false;
         //tcal.text = "NOT CALIBRATED!";
-        angold = -1000;
+        angold = 0;
         point = Vector3.one;
     }
 
@@ -175,20 +176,7 @@ public class BytesTerminal : MonoBehaviour
                     float s1, s2;
                     s1 = (qq1.w * qq1.w) + (qq1.x * qq1.x) + (qq1.y * qq1.y) + (qq1.z * qq1.z);
                     s2 = (qq2.w * qq2.w) + (qq2.x * qq2.x) + (qq2.y * qq2.y) + (qq2.z * qq2.z);
-                    /*
-                    t.text += (messageFromMC.Length.ToString("00: ")
-                            + "  ,w1: " + qq1.w.ToString("0.0000")
-                            + "  ,x1: " + qq1.x.ToString("0.0000")
-                            + "  ,y1: " + qq1.y.ToString("0.0000")
-                            + "  ,z1: " + qq1.z.ToString("0.0000")
-                            + "  ,s1: "+ ((int)(s1 * 100)).ToString("0.00")
-
-                            + "  ,w2: " + qq2.w.ToString("0.0000")
-                            + "  ,x2:" + qq2.x.ToString("0.0000")
-                            + "  ,y2:" + qq2.y.ToString("0.0000")
-                            + "  ,z2:" + qq2.z.ToString("0.0000")
-                            + "  ,s2:"+ ((int)(s2 * 100)).ToString("0.00")+ "\n");
-                    */
+                 
                     if ((int)(s1 * 100) == 99 || (int)(s1 * 100) == 100)
                         q1.transform.rotation = qq1;
 
@@ -197,17 +185,34 @@ public class BytesTerminal : MonoBehaviour
 
                     if (((int)(s1 * 100) == 99 || (int)(s1 * 100) == 100) && ((int)(s2 * 100) == 99 || (int)(s2 * 100) == 100))
                     {
-                        //t.text = "q1(t)  (x,y,z,w) : " + qq1.ToString() +
-                        //         "\n q2(t)  (x,y,z,w) : " + qq2.ToString();
+                        Angletext.text = "Not Set!";
 
                         if (ifcal)
                         {
                             q3.transform.rotation = qq3 = product(divideQbyR(qq2, qq2_0), qq1_0);
                             diff2 = divideQbyR(qq1, qq3);
-                            float currentAngle = Quaternion.Angle(qqzero, diff2);
-                            //debugText2.text = currentAngle.ToString("0.0");
+                            //float currentAngle = Quaternion.Angle(qqzero, diff2);
+                            arm.transform.localRotation = diff2;//current position
 
-                            arm.transform.localRotation = diff2;
+                            v3cur = (toparm.transform.position - sp.transform.position);
+                            v3cur_ = Vector3.ProjectOnPlane(v3cur, Vector3.Cross(v3max, v3min));
+                            currentAngle = Vector3.Angle(v3min, v3cur_);
+
+                            if (Mathf.Abs((Vector3.Angle(v3min, v3max) + Vector3.Angle(v3min, v3cur_)) - Vector3.Angle(v3max, v3cur_)) < 1)
+                                currentAngle *= -1;
+                            else if (Mathf.Abs(Vector3.Angle(v3min, v3max) + Vector3.Angle(v3min, v3cur_) + Vector3.Angle(v3max, v3cur_) - 360) < 1)
+                                currentAngle *= -1;
+
+                            currentAngle = (angold * 3 + currentAngle) / 4.0f;
+
+                            Angletext.text = "\n min: " + v3min.ToString() +
+                                 "\n v3cur: " + v3cur.ToString() +
+                                 "\n v3cur_: " + v3cur_.ToString() +
+                                "\n angle mm: " + Vector3.Angle(v3min, v3max).ToString() +
+                                "\n angle n : " + Vector3.Angle(v3min, v3cur_).ToString() +
+                                 "\n angle x : " + Vector3.Angle(v3max, v3cur_).ToString() +
+                                 "\n CurrentAngle :" + currentAngle.ToString();
+
 
                             // don't want to increase max angle in hockey or pop pop
                             //if (currentAngle > maxAngle && (Hockey.Instance == null || PopManager.instance != null))
@@ -239,10 +244,10 @@ public class BytesTerminal : MonoBehaviour
                                     thisGamesMaxAngles.Add(maxAngle);
                                 }
                             }
+                            angold = currentAngle;
                         }
                         else
                         {
-                            q3.transform.rotation = qq2;
                             q3.transform.rotation = qq2;
                         }
  
@@ -300,7 +305,12 @@ public class BytesTerminal : MonoBehaviour
     {
         qq1_0 = qq1;
         qq2_0 = qq2;
-        diff1 = product(qq1_0, inverse(qq2_0));
+        /////
+        qq3 = product(divideQbyR(qq2, qq2_0), qq1_0);
+        qmin = diff2 = divideQbyR(qq1, qq3);
+        arm.transform.localRotation = diff2;
+        v3min = toparm.transform.position - sp.transform.position;
+
         ifcal = true;
         UIManager.Instance.setMinToggle.isOn = true;
         if (UIManager.Instance.setMaxToggle.isOn)
@@ -312,6 +322,10 @@ public class BytesTerminal : MonoBehaviour
 
     public void SetMaxPosition()
     {
+        qq3 = product(divideQbyR(qq2, qq2_0), qq1_0);
+        qmax = divideQbyR(qq1, qq3);
+        v3max = toparm.transform.position - sp.transform.position;
+
         float currentAngle = Quaternion.Angle(qqzero, diff2);
         maxAngle = currentAngle;
         UIManager.Instance.setMaxToggle.isOn = true;
