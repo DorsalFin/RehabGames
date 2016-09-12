@@ -52,6 +52,7 @@ public class Calibration : MonoBehaviour {
 
     public void ExitCurrentGame()
     {
+        BytesTerminal.Instance.ResetValues();
         _uiManager.SetUiShowState = true;
         Destroy(currentGameParentObject);
     }
