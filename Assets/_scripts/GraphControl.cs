@@ -56,6 +56,10 @@ public class GraphControl : MonoBehaviour
     public Transform listParentTransform;
     public GameObject selectedGameImage;
 
+    public GameObject topResultsRoot;
+    public Transform topResultsParent;
+    public GameObject recentResultsRoot;
+    public Transform recentResultsParent;
     public Text noResultsText;
     public GameObject userDoesNotExistPanel;
 
@@ -118,9 +122,20 @@ public class GraphControl : MonoBehaviour
         return result;
     }
 
-    public void AddResults(List<Result> newResults)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="newResults"></param>
+    /// <param name="type">0 = topResults, 1 = recentResults</param>
+    public void AddResults(List<Result> newResults, int type)
     {
         loadingIndicator.SetActive(false);
+
+        if (type == 0 && !topResultsRoot.activeSelf)
+            topResultsRoot.SetActive(true);
+        else if (type == 1 && !recentResultsRoot.activeSelf)
+            recentResultsRoot.SetActive(true);
+
         results.AddRange(newResults);
         if (_selectedGame == newResults[0].game)
         {
@@ -130,7 +145,7 @@ public class GraphControl : MonoBehaviour
                 GameObject resultButton = (GameObject)Instantiate(resultButtonPrefab);
                 resultButton.name = newResult.id.ToString();
                 resultButton.GetComponentInChildren<Text>().text = newResult.creationDate.ToLongDateString() + " / " + newResult.creationDate.ToShortTimeString() + " / " + GetColouredDifficultyStringFromInt(newResult.difficulty) + " / " + (newResult.game != "basketball" ? (newResult.win ? "win" : "lose") : newResult.actionTimes.Count.ToString() + " shots");
-                resultButton.transform.parent = listParentTransform;
+                resultButton.transform.parent = type == 0 ? topResultsParent : recentResultsParent;
 
                 resultButton.GetComponent<Button>().onClick.AddListener(delegate { ClickedResultsButton(resultButton); });
             }
@@ -175,6 +190,8 @@ public class GraphControl : MonoBehaviour
     public void ZeroResults(string msg)
     {
         loadingIndicator.SetActive(false);
+        topResultsRoot.SetActive(false);
+        recentResultsRoot.SetActive(false);
         noResultsText.text = msg;
         noResultsText.gameObject.SetActive(true);
     }
@@ -266,13 +283,17 @@ public class GraphControl : MonoBehaviour
         userDoesNotExistPanel.SetActive(false);
         noResultsText.gameObject.SetActive(false);
         loadingIndicator.SetActive(true);
+        topResultsRoot.SetActive(false);
+        recentResultsRoot.SetActive(false);
         NetworkManager.Instance.GetResultData(NetworkManager.Instance.currentUserId, username, _selectedGame, -1, ResultsOfGameStored(_selectedGame));
         _lastSearchedName = username;
     }
 
     void ClearList()
     {
-        foreach (Transform child in listParentTransform)
+        foreach (Transform child in topResultsParent)
+            Destroy(child.gameObject);
+        foreach (Transform child in recentResultsParent)
             Destroy(child.gameObject);
     }
 

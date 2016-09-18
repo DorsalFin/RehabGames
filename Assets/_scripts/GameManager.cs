@@ -139,8 +139,11 @@ public class GameManager : MonoBehaviour
 
         // log these results on the server
         if (NetworkManager.Instance.currentUserId != -1)
-            //NetworkManager.Instance.SaveResultData(GetCurrentGameName(), UIManager.Instance.currentDifficulty, win, microphone.Instance.minangle, microphone.Instance.maxangle, startTime, endTime, GetCurrentGameActionTimes() != null ? GetCurrentGameActionTimes().ToArray() : null, microphone.Instance.frequencies.ToArray(), microphone.Instance.maxAngles.ToArray());
+        {
+            // TODO: resize arrays here - remove every nth element to get max r size array
+
             NetworkManager.Instance.SaveResultData(GetCurrentGameName(), UIManager.Instance.currentDifficulty, win, BytesTerminal.Instance.minAngle, BytesTerminal.Instance.maxAngle, startTime, endTime, GetCurrentGameActionTimes() != null ? GetCurrentGameActionTimes().ToArray() : null, BytesTerminal.Instance.thisGamesFrequencies.ToArray(), BytesTerminal.Instance.thisGamesMaxAngles.ToArray());
+        }
     }
 
     public void GameOver(bool winner, string text)

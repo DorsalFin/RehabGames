@@ -85,6 +85,7 @@ public class NetworkManager : MonoBehaviour
         else
             formRequest.AddField("username", username);
 
+        formRequest.AddField("versionNum", appVersion);
         formRequest.AddField("game", game);
         formRequest.AddField("limit", limit);
 
@@ -399,55 +400,32 @@ public class NetworkManager : MonoBehaviour
                     }
                 }
 
-                if (aData.ContainsKey("found_results"))
+                if (aData.ContainsKey("topResults"))
                 {
-                    List<Result> validResults = new List<Result>();
-
-                    Dictionary<string, object>[] results = (Dictionary<string, object>[])aData["found_results"];
+                    List<Result> topResults = new List<Result>();
+                    Dictionary<string, object>[] results = (Dictionary<string, object>[])aData["topResults"];
                     foreach (Dictionary<string, object> matchingResult in results)
-                    {
-                        int id = int.Parse((string)matchingResult["id"]);
-                        string game = (string)matchingResult["game"];
-                        float minAngle = float.Parse((string)matchingResult["min_angle"]);
-                        float maxAngle = float.Parse((string)matchingResult["max_angle"]);
-
-                        string actionTimesString = (string)matchingResult["action_times"];
-                        List<float> actionTimes = new List<float>();
-                        if (actionTimesString != "{}")
-                        {
-                            actionTimesString = actionTimesString.TrimStart('{');
-                            actionTimesString = actionTimesString.TrimEnd('}');
-                            actionTimes = actionTimesString.Split(',').Select(t => float.Parse(t)).ToList();
-                        }
-
-                        string inputFreqsString = (string)matchingResult["input_frequencies"];
-                        inputFreqsString = inputFreqsString.TrimStart('{');
-                        inputFreqsString = inputFreqsString.TrimEnd('}');
-                        List<float> inputFrequencies = inputFreqsString.Split(',').Select(t => float.Parse(t)).ToList();
-
-                        string inputFreqMaxesString = (string)matchingResult["input_frequency_maximums"];
-                        inputFreqMaxesString = inputFreqMaxesString.TrimStart('{');
-                        inputFreqMaxesString = inputFreqMaxesString.TrimEnd('}');
-                        List<float> inputFrequencyMaxes = inputFreqMaxesString.Split(',').Select(t => float.Parse(t)).ToList();
-
-                        int userId = int.Parse((string)matchingResult["user_id"]);
-                        string createdAtString = (string)matchingResult["created_at"];
-                        string winString = (string)matchingResult["win"];
-                        float startTime = float.Parse((string)matchingResult["start_time"]);
-                        float endTime = float.Parse((string)matchingResult["end_time"]);
-                        int difficulty = int.Parse((string)matchingResult["difficulty"]);
-
-                        validResults.Add(GraphControl.Instance.CreateResult(id, userId, game, difficulty, winString.ToLower().Contains('t'), minAngle, maxAngle, startTime, endTime, actionTimes, inputFrequencies, inputFrequencyMaxes, DateTime.Parse(createdAtString)));
-                    }
-
-                    GraphControl.Instance.AddResults(validResults);
+                        topResults.Add(ParseResult(matchingResult));
+                    GraphControl.Instance.AddResults(topResults, 0);
                 }
-                else
+
+                if (aData.ContainsKey("recentResults"))
+                {
+                    List<Result> recentResults = new List<Result>();
+                    Dictionary<string, object>[] results = (Dictionary<string, object>[])aData["recentResults"];
+                    foreach (Dictionary<string, object> matchingResult in results)
+                        recentResults.Add(ParseResult(matchingResult));
+                    GraphControl.Instance.AddResults(recentResults, 1);
+                }
+
+                if (!aData.ContainsKey("topResults") && !aData.ContainsKey("recentResults"))
                 {
                     Debug.Log("no results for search");
 
                     if (gamename == GraphControl.Instance.SelectedGame)
+                    {
                         GraphControl.Instance.ZeroResults("There are no results here!");
+                    }
                 }
             }
             else
@@ -465,6 +443,44 @@ public class NetworkManager : MonoBehaviour
                     GraphControl.Instance.ZeroResults("There was an error getting data");
             }
         }
+    }
+
+    Result ParseResult(Dictionary<string, object> resultData)
+    {
+        Result result = new Result();
+        result.id = int.Parse((string)resultData["id"]);
+        result.game = (string)resultData["game"];
+        result.minAngle = float.Parse((string)resultData["min_angle"]);
+        result.maxAngle = float.Parse((string)resultData["max_angle"]);
+
+        string actionTimesString = (string)resultData["action_times"];
+        if (actionTimesString != "{}")
+        {
+            actionTimesString = actionTimesString.TrimStart('{');
+            actionTimesString = actionTimesString.TrimEnd('}');
+            result.actionTimes = actionTimesString.Split(',').Select(t => float.Parse(t)).ToList();
+        }
+
+        string inputFreqsString = (string)resultData["input_frequencies"];
+        inputFreqsString = inputFreqsString.TrimStart('{');
+        inputFreqsString = inputFreqsString.TrimEnd('}');
+        result.inputFrequencies = inputFreqsString.Split(',').Select(t => float.Parse(t)).ToList();
+
+        string inputFreqMaxesString = (string)resultData["input_frequency_maximums"];
+        inputFreqMaxesString = inputFreqMaxesString.TrimStart('{');
+        inputFreqMaxesString = inputFreqMaxesString.TrimEnd('}');
+        result.inputFrequencyMaximums = inputFreqMaxesString.Split(',').Select(t => float.Parse(t)).ToList();
+
+        result.userId = int.Parse((string)resultData["user_id"]);
+        string createdAtString = (string)resultData["created_at"];
+        result.creationDate = DateTime.Parse(createdAtString);
+        string winString = (string)resultData["win"];
+        result.win = winString.ToLower().Contains('t');
+        result.startTime = float.Parse((string)resultData["start_time"]);
+        result.endTime = float.Parse((string)resultData["end_time"]);
+        result.difficulty = int.Parse((string)resultData["difficulty"]);
+
+        return result;
     }
 
     // from http://forum.unity3d.com/threads/problem-converting-text-with-unescape-to-text-with-accents.108469/
