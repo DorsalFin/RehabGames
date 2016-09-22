@@ -56,9 +56,11 @@ public class PopManager : MonoBehaviour {
 
 	}
 
-	public void GameSuccess(){
+	public void GameSuccess()
+    {
 		GlobalValue.levelPlaying++;
         winStatus = true;
+        bool newRecord = false;
 
         if (GlobalValue.levelPlaying >= UIManager.Instance.popPopHighScores[UIManager.Instance.currentDifficulty])//HighLevel)
         {
@@ -66,14 +68,13 @@ public class PopManager : MonoBehaviour {
             UIManager.Instance.popPopHighScores[UIManager.Instance.currentDifficulty] = HighLevel;
             NetworkManager.Instance.SetHighLevel(UIManager.Instance.currentDifficulty, HighLevel);
             UIManager.Instance.UpdateTopResultTexts();
+            newRecord = true;
         }
 
-        GameManager.Instance.GameEnding(Time.time);
-
+        GameManager.Instance.GameEnding(Time.time, newRecord);
         StartCoroutine (WaitForRestart (1.5f));
-	
+
 //		AdsController.ShowAds ();
-	
 	}
 
 	public void GameOver(){
@@ -83,7 +84,6 @@ public class PopManager : MonoBehaviour {
         StartCoroutine (WaitForRestart (1f));
 
 //		AdsController.ShowAds ();
-	
 	}
 
 	public void Restart(){

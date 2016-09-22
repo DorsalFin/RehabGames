@@ -120,7 +120,7 @@ public class GameManager : MonoBehaviour
             hasResetToggle.isOn = false;
     }
 
-    public void GameEnding(float eTime)
+    public void GameEnding(float eTime, bool record = false)
     {
         endTime = eTime;
         _gameInProgress = false;
@@ -140,9 +140,12 @@ public class GameManager : MonoBehaviour
         // log these results on the server
         if (NetworkManager.Instance.currentUserId != -1)
         {
-            // TODO: resize arrays here - remove every nth element to get max r size array
+            // TODO: resize arrays here - 
+            //  a) remove every nth element to get max r size array
+            //  or
+            //  b) remove any elements too close to the preceding picked one
 
-            NetworkManager.Instance.SaveResultData(GetCurrentGameName(), UIManager.Instance.currentDifficulty, win, BytesTerminal.Instance.minAngle, BytesTerminal.Instance.maxAngle, startTime, endTime, GetCurrentGameActionTimes() != null ? GetCurrentGameActionTimes().ToArray() : null, BytesTerminal.Instance.thisGamesFrequencies.ToArray(), BytesTerminal.Instance.thisGamesMaxAngles.ToArray());
+            NetworkManager.Instance.SaveResultData(GetCurrentGameName(), UIManager.Instance.currentDifficulty, win, record, BytesTerminal.Instance.minAngle, BytesTerminal.Instance.maxAngle, startTime, endTime, GetCurrentGameActionTimes() != null ? GetCurrentGameActionTimes().ToArray() : null, BytesTerminal.Instance.thisGamesFrequencies.ToArray(), BytesTerminal.Instance.thisGamesMaxAngles.ToArray());
         }
     }
 

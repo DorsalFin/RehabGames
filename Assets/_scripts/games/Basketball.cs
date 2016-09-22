@@ -82,12 +82,11 @@ public class Basketball : MonoBehaviour
 
     void GameOver()
     {
-        GameManager.Instance.GameEnding(Time.time);
-
         bool newRecord = false;
         if (_score > UIManager.Instance.basketballHighScores[UIManager.Instance.currentDifficulty])
             newRecord = true;
 
+        GameManager.Instance.GameEnding(Time.time, newRecord);
         GameManager.Instance.GameOver(true, newRecord ? "NEW RECORD! " + _score + " shots!" : "Great effort - You made " + _score + " shots!");
 
         if (newRecord)

@@ -27,6 +27,7 @@ public class GraphControl : MonoBehaviour
     public static GraphControl Instance;
 
     List<Result> results = new List<Result>();
+    Result topResult;
     public GameObject resultButtonPrefab;
 
     public Button[] gameButtons;
@@ -58,6 +59,7 @@ public class GraphControl : MonoBehaviour
 
     public GameObject topResultsRoot;
     public Transform topResultsParent;
+    public GameObject overallButton;
     public GameObject recentResultsRoot;
     public Transform recentResultsParent;
     public Text noResultsText;
@@ -152,6 +154,17 @@ public class GraphControl : MonoBehaviour
         }
     }
 
+    public void AddTopResult(Result result)
+    {
+        topResult = result;
+        overallButton.SetActive(true);
+    }
+
+    public void ClickedTopResult()
+    {
+        ShowGraph(topResult, true);
+    }
+
     public void ClickedResultsButton(GameObject button)
     {
         int matchingId = int.Parse(button.name);
@@ -191,6 +204,7 @@ public class GraphControl : MonoBehaviour
     {
         loadingIndicator.SetActive(false);
         topResultsRoot.SetActive(false);
+        overallButton.SetActive(false);
         recentResultsRoot.SetActive(false);
         noResultsText.text = msg;
         noResultsText.gameObject.SetActive(true);
@@ -284,6 +298,7 @@ public class GraphControl : MonoBehaviour
         noResultsText.gameObject.SetActive(false);
         loadingIndicator.SetActive(true);
         topResultsRoot.SetActive(false);
+        overallButton.SetActive(false);
         recentResultsRoot.SetActive(false);
         NetworkManager.Instance.GetResultData(NetworkManager.Instance.currentUserId, username, _selectedGame, -1, ResultsOfGameStored(_selectedGame));
         _lastSearchedName = username;
@@ -326,39 +341,41 @@ public class GraphControl : MonoBehaviour
         float totalActions = actionTimes != null ? actionTimes.Count : 0;
         uiLineRendererActions.gameObject.SetActive(totalActions > 0);
 
-        //Generating information:   
-        //domain:
-        float[] temp = result.inputFrequencies.ToArray();
-        int input_count = result.inputFrequencies.Count;
-        Array.Sort(temp);
-        int domain = (int)(temp[input_count - 1] - temp[0]);
-        //max up and down speed:
-        temp = result.inputFrequencies.ToArray();
-        for (int i = 0; i < input_count - 1; i++)
-            temp[i] = temp[i + 1] - temp[i];
-        temp[input_count - 1] = 0;
-        Array.Sort(temp);
+        if (result != topResult)
+        {
+            //Generating information:   
+            //domain:
+            float[] temp = result.inputFrequencies.ToArray();
+            int input_count = result.inputFrequencies.Count;
+            Array.Sort(temp);
+            int domain = (int)(temp[input_count - 1] - temp[0]);
+            //max up and down speed:
+            temp = result.inputFrequencies.ToArray();
+            for (int i = 0; i < input_count - 1; i++)
+                temp[i] = temp[i + 1] - temp[i];
+            temp[input_count - 1] = 0;
+            Array.Sort(temp);
 
-        float upspeed = 0;
-        for (int i = 1; i < input_count / 30; i++)
-            upspeed += temp[input_count - i];
-        upspeed /= ((input_count / 30) - 2);
-        upspeed /= horizBySecond;
+            float upspeed = 0;
+            for (int i = 1; i < input_count / 30; i++)
+                upspeed += temp[input_count - i];
+            upspeed /= ((input_count / 30) - 2);
+            upspeed /= horizBySecond;
 
-        float downspeed = 0;
-        for (int i = 0; i < input_count / 30; i++)
-            downspeed += temp[i];
-        downspeed /= ((input_count / 30) - 1);
-        downspeed /= horizBySecond;
+            float downspeed = 0;
+            for (int i = 0; i < input_count / 30; i++)
+                downspeed += temp[i];
+            downspeed /= ((input_count / 30) - 1);
+            downspeed /= horizBySecond;
 
-        horizBarExtentText.text = totalTime.ToString("00.00");
-        vertBatExtentText.text = "Movement domain: " + domain.ToString() + " Deg " +
-                                 "-- Initial end angle: " + ((int)(result.inputFrequencyMaximums[0])).ToString() + " Deg " +
-                                 "-- Final end angle: " + ((int)(result.inputFrequencyMaximums[result.inputFrequencyMaximums.Count - 1])).ToString() + " Deg \n" +
-                                 "Avarage upward speed:" + upspeed.ToString("0.00") + " Deg/Sec " +
-                                 "-- Avarage downward speed:" + downspeed.ToString("0.00") + " Deg/Sec \n " +
-                                 "Total rewards: " + totalActions.ToString();
-
+            horizBarExtentText.text = totalTime.ToString("00.00");
+            vertBatExtentText.text = "Movement domain: " + domain.ToString() + " Deg " +
+                                     "-- Initial end angle: " + ((int)(result.inputFrequencyMaximums[0])).ToString() + " Deg " +
+                                     "-- Final end angle: " + ((int)(result.inputFrequencyMaximums[result.inputFrequencyMaximums.Count - 1])).ToString() + " Deg \n" +
+                                     "Avarage upward speed:" + upspeed.ToString("0.00") + " Deg/Sec " +
+                                     "-- Avarage downward speed:" + downspeed.ToString("0.00") + " Deg/Sec \n " +
+                                     "Total rewards: " + totalActions.ToString();
+        }
 
         if (totalActions > 0)
         {
@@ -421,10 +438,16 @@ public class GraphControl : MonoBehaviour
             //line.Draw();
         }
 
-        // and set reset bar height
-        float resetY = 0.10f * totalHeight;
-        if (resetLine != null)
-            resetLine.transform.localPosition = new Vector2(resetLine.transform.localPosition.x, horizBarImage.transform.localPosition.y + resetY);
+        if (result == topResult)
+            resetLine.SetActive(false);
+        else
+        {
+            // and set reset bar height
+            resetLine.SetActive(true);
+            float resetY = 0.10f * totalHeight;
+            if (resetLine != null)
+                resetLine.transform.localPosition = new Vector2(resetLine.transform.localPosition.x, horizBarImage.transform.localPosition.y + resetY);
+        }
 
         graphPanel.SetActive(true);
     }

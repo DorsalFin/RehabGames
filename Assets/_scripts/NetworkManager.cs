@@ -110,7 +110,7 @@ public class NetworkManager : MonoBehaviour
         StartCoroutine(PerformQuery(_serviceUrl, formRequest, "GetResultData"));
     }
 
-    public void SaveResultData(string game, int difficulty, bool win, float minAngle, float maxAngle, float startTime, float endTime, float[] actionTimes, float[] inputFrequencies, float[] inputFrequencyMaximums)
+    public void SaveResultData(string game, int difficulty, bool win, bool record, float minAngle, float maxAngle, float startTime, float endTime, float[] actionTimes, float[] inputFrequencies, float[] inputFrequencyMaximums)
     {
         WWWForm formRequest = new WWWForm();
 
@@ -122,6 +122,7 @@ public class NetworkManager : MonoBehaviour
         formRequest.AddField("game", game);
         formRequest.AddField("difficulty", difficulty);
         formRequest.AddField("win", win.ToString());
+        formRequest.AddField("record", record.ToString());
         formRequest.AddField("min_angle", minAngle.ToString());
         formRequest.AddField("max_angle", maxAngle.ToString());
         formRequest.AddField("start_time", startTime.ToString());
@@ -416,6 +417,41 @@ public class NetworkManager : MonoBehaviour
                     foreach (Dictionary<string, object> matchingResult in results)
                         recentResults.Add(ParseResult(matchingResult));
                     GraphControl.Instance.AddResults(recentResults, 1);
+                }
+
+                if (aData.ContainsKey("recordResults"))
+                {
+                    List<Result> recordResults = new List<Result>();
+                    Dictionary<string, object>[] results = (Dictionary<string, object>[])aData["recordResults"];
+                    Result topResult = new Result();
+                    topResult.game = (string)results[0]["game"];
+                    topResult.userId = int.Parse((string)results[0]["user_id"]);
+                    topResult.endTime = results.Count();
+                    float minAction = Mathf.Infinity;
+                    float maxAction = 0f;
+
+                    foreach (Dictionary<string, object> matchingResult in results)
+                    {
+                        if (topResult.game == "basketball")
+                        {
+                            string actionTimesString = (string)matchingResult["action_times"];
+                            if (actionTimesString != "{}")
+                            {
+                                actionTimesString = actionTimesString.TrimStart('{');
+                                actionTimesString = actionTimesString.TrimEnd('}');
+                                int actionCount = actionTimesString.Split(',').Select(t => float.Parse(t)).ToList().Count;
+                                if (actionCount < minAction)
+                                    minAction = actionCount;
+                                if (actionCount > maxAction)
+                                    maxAction = actionCount;
+                            }
+                        }
+                    }
+
+                    for (int i = 0; i < results.Count(); i++)
+                        topResult.actionTimes.Add(i + 1);
+
+                    GraphControl.Instance.AddTopResult(topResult);
                 }
 
                 if (!aData.ContainsKey("topResults") && !aData.ContainsKey("recentResults"))

@@ -215,7 +215,7 @@ public class Hockey : MonoBehaviour
             UIManager.Instance.UpdateTopResultTexts();
         }
 
-        GameManager.Instance.GameEnding(Time.time);
+        GameManager.Instance.GameEnding(Time.time, newRecord);
         GameManager.Instance.GameOver(winner, winner ? (newRecord ? "You beat your old record! Great job!" : "Well done! You beat the computer!") : "Oh no! The computer won!");
     }
 }
