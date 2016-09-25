@@ -354,12 +354,14 @@ public class UIManager : MonoBehaviour
 
     public void OnDifficultyButtonPressed(GameObject difficultyButton)
     {
+#if !UNITY_EDITOR
         if (!BytesTerminal.Instance.fullyCalibrated)
         {
             iTween.Stop(notConnectedGameErrorObject);
             iTween.ScaleTo(notConnectedGameErrorObject, iTween.Hash("scale", Vector3.one * 1.2f, "time", 0.5f, "easetype", "linear", "oncomplete", "ScaleDownError", "oncompletetarget", gameObject));
             return;
         }
+#endif
 
         if (difficultyButton.name.Contains("easy"))
             currentDifficulty = 0;

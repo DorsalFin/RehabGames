@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Linq;
 //using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour 
@@ -120,12 +121,13 @@ public class GameManager : MonoBehaviour
             hasResetToggle.isOn = false;
     }
 
-    public void GameEnding(float eTime, bool record = false)
+    public void GameEnding(float eTime, bool record = false, bool showUI = true)
     {
         endTime = eTime;
         _gameInProgress = false;
 
-        if (UIManager.Instance.CurrentGameString != "pop_pop")
+        //if (UIManager.Instance.CurrentGameString != "pop_pop")
+        if (showUI)
         {
             canvasFadeGroup.gameObject.SetActive(true);
             _fadingIn = true;
@@ -135,15 +137,22 @@ public class GameManager : MonoBehaviour
                     part.SetActive(false);
         }
 
-        bool win = CheckWinStatus();
+        bool win = CheckWinStatus() || record;
 
         // log these results on the server
         if (NetworkManager.Instance.currentUserId != -1)
         {
-            // TODO: resize arrays here - 
-            //  a) remove every nth element to get max r size array
-            //  or
-            //  b) remove any elements too close to the preceding picked one
+            // maximum array length of 100 elements
+            if (BytesTerminal.Instance.thisGamesFrequencies.Count > 100)
+            {
+                int nth = (int)((float)BytesTerminal.Instance.thisGamesFrequencies.Count / 100f);
+                BytesTerminal.Instance.thisGamesFrequencies = new List<float>(BytesTerminal.Instance.thisGamesFrequencies.Where((elem, idx) => idx % nth == 0));
+            }
+            if (BytesTerminal.Instance.thisGamesMaxAngles.Count > 100)
+            {
+                int nth = (int)((float)BytesTerminal.Instance.thisGamesMaxAngles.Count / 100f);
+                BytesTerminal.Instance.thisGamesMaxAngles = new List<float>(BytesTerminal.Instance.thisGamesMaxAngles.Where((elem, idx) => idx % nth == 0));
+            }
 
             NetworkManager.Instance.SaveResultData(GetCurrentGameName(), UIManager.Instance.currentDifficulty, win, record, BytesTerminal.Instance.minAngle, BytesTerminal.Instance.maxAngle, startTime, endTime, GetCurrentGameActionTimes() != null ? GetCurrentGameActionTimes().ToArray() : null, BytesTerminal.Instance.thisGamesFrequencies.ToArray(), BytesTerminal.Instance.thisGamesMaxAngles.ToArray());
         }
@@ -220,7 +229,9 @@ public class GameManager : MonoBehaviour
         //Result result = GraphControl.Instance.CreateResult(-1, NetworkManager.Instance.currentUserId, GetCurrentGameName(), UIManager.Instance.currentDifficulty, CheckWinStatus(), microphone.Instance.minangle, microphone.Instance.maxangle, startTime, endTime, GetCurrentGameActionTimes(), microphone.Instance.frequencies, microphone.Instance.maxAngles, System.DateTime.Now);
         Result result = GraphControl.Instance.CreateResult(-1, NetworkManager.Instance.currentUserId, GetCurrentGameName(), UIManager.Instance.currentDifficulty, CheckWinStatus(), BytesTerminal.Instance.minAngle, BytesTerminal.Instance.maxAngle, startTime, endTime, GetCurrentGameActionTimes(), BytesTerminal.Instance.thisGamesFrequencies, BytesTerminal.Instance.thisGamesMaxAngles, System.DateTime.Now);
 
-        gameOverPanel.SetActive(false);
+        if (gameOverPanel)
+            gameOverPanel.SetActive(false);
+
         GraphControl.Instance.ShowGraph(result, false, true);
     }
 }

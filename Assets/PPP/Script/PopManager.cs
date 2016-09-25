@@ -72,7 +72,7 @@ public class PopManager : MonoBehaviour {
         }
 
         GameManager.Instance.GameEnding(Time.time, newRecord);
-        StartCoroutine (WaitForRestart (1.5f));
+        //StartCoroutine (WaitForRestart (1.5f));
 
 //		AdsController.ShowAds ();
 	}
@@ -80,7 +80,7 @@ public class PopManager : MonoBehaviour {
 	public void GameOver(){
         winStatus = false;
 		state = GameState.Dead;
-        GameManager.Instance.GameEnding(Time.time);
+        GameManager.Instance.GameEnding(Time.time, showUI: false);
         StartCoroutine (WaitForRestart (1f));
 
 //		AdsController.ShowAds ();
@@ -89,6 +89,12 @@ public class PopManager : MonoBehaviour {
 	public void Restart(){
 		StartCoroutine (WaitForRestart (0f));
 	}
+
+    public void NextButtonPressed()
+    {
+        GlobalValue.isRestart = true;
+        GameSceneManager.Instance.ResetPopPop();
+    }
 
 	IEnumerator WaitForRestart(float time){
 		yield return new WaitForSeconds (time);

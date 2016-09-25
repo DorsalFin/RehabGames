@@ -191,7 +191,9 @@ public class GraphControl : MonoBehaviour
     public void BackButtonPressed()
     {
         if (!graphPanel.activeSelf || GameManager.Instance != null)
-            ExitGraph();
+        {
+            ExitGraph(PopManager.instance == null);
+        }
         else
         {
             graphPanel.SetActive(false);
@@ -470,9 +472,9 @@ public class GraphControl : MonoBehaviour
             return popPopActionPrefab;
     }
 
-    public void ExitGraph()
+    public void ExitGraph(bool exitGame = true)
     {
-        if (GameManager.Instance != null)
+        if (GameManager.Instance != null && exitGame)
             GameManager.Instance.ExitGame();
 
         ResetGraph();
