@@ -218,4 +218,8 @@ public class Hockey : MonoBehaviour
         GameManager.Instance.GameEnding(Time.time, newRecord);
         GameManager.Instance.GameOver(winner, winner ? (newRecord ? "You beat your old record! Great job!" : "Well done! You beat the computer!") : "Oh no! The computer won!");
     }
+    public void ExitGame()
+    {
+        Calibration.Instance.ExitCurrentGame();
+    }
 }

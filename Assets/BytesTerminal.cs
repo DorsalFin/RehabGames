@@ -17,6 +17,7 @@ public class BytesTerminal : MonoBehaviour
     Vector3 v3min, v3max, v3cur, v3cur_;
     Vector3 point;
     float angold;
+    int count;
 
     public bool fullyCalibrated;
 
@@ -39,31 +40,31 @@ public class BytesTerminal : MonoBehaviour
     ///
     //int t='\n';
     public Vector2 scrollPosition = Vector2.zero;
-	bool connected = false;// equals true when connected
+    bool connected = false;// equals true when connected
     public InputField deviceNameInput;
     string messageToMC = "message"; // string to sent to Microcontroller
-	byte [] messageFromMC ; //temporary string to hold BtConnector.read() value
-	string controlData = ""; //will contain data from the plugin to check the status of the whole process
-	
-	List<string> messages = new List<string>();// messages from Microcontroller in bytes
-	
-	int labelHeight;//height of a single label inside the ScrollView
-	int height;//ScrollView Height
+    byte[] messageFromMC; //temporary string to hold BtConnector.read() value
+    string controlData = ""; //will contain data from the plugin to check the status of the whole process
+
+    List<string> messages = new List<string>();// messages from Microcontroller in bytes
+
+    int labelHeight;//height of a single label inside the ScrollView
+    int height;//ScrollView Height
 
     bool hasReset;
-	
+
     void Awake()
     {
         Instance = this;
     }
 
-	void Start ()
+    void Start()
     {
-		//use one of the following two methods to change the default bluetooth module.
-		//BtConnector.moduleMAC("00:13:12:09:55:17");
-		//BtConnector.moduleName ("HC-05");
-		height = (int)(Screen.height * 0.8f);
-		labelHeight = (int)(0.06f*height);
+        //use one of the following two methods to change the default bluetooth module.
+        //BtConnector.moduleMAC("00:13:12:09:55:17");
+        //BtConnector.moduleName ("HC-05");
+        height = (int)(Screen.height * 0.8f);
+        labelHeight = (int)(0.06f * height);
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
         qqzero.w = 1;
         qqzero.x = qqzero.y = qqzero.z = 0;
@@ -71,9 +72,10 @@ public class BytesTerminal : MonoBehaviour
         //tcal.text = "NOT CALIBRATED!";
         angold = 0;
         point = Vector3.one;
+        count = 0;
     }
 
-	void Update ()
+    void Update()
     {
         //q1.transform.Rotate(0.1f, 0, 0.1f);
         //q2.transform.Rotate(-0.1f, 0, -0.1f);
@@ -176,7 +178,7 @@ public class BytesTerminal : MonoBehaviour
                     float s1, s2;
                     s1 = (qq1.w * qq1.w) + (qq1.x * qq1.x) + (qq1.y * qq1.y) + (qq1.z * qq1.z);
                     s2 = (qq2.w * qq2.w) + (qq2.x * qq2.x) + (qq2.y * qq2.y) + (qq2.z * qq2.z);
-                 
+
                     if ((int)(s1 * 100) == 99 || (int)(s1 * 100) == 100)
                         q1.transform.rotation = qq1;
 
@@ -189,9 +191,10 @@ public class BytesTerminal : MonoBehaviour
 
                         if (ifcal)
                         {
+
                             q3.transform.rotation = qq3 = product(divideQbyR(qq2, qq2_0), qq1_0);
                             diff2 = divideQbyR(qq1, qq3);
-                            //float currentAngle = Quaternion.Angle(qqzero, diff2);
+                            //currentAngle = Quaternion.Angle(qqzero, diff2);
                             arm.transform.localRotation = diff2;//current position
 
                             v3cur = (toparm.transform.position - sp.transform.position);
@@ -211,8 +214,8 @@ public class BytesTerminal : MonoBehaviour
                                 "\n angle mm: " + Vector3.Angle(v3min, v3max).ToString() +
                                 "\n angle n : " + Vector3.Angle(v3min, v3cur_).ToString() +
                                  "\n angle x : " + Vector3.Angle(v3max, v3cur_).ToString() +
+                                 "\n count : " + count.ToString() +
                                  "\n CurrentAngle :" + currentAngle.ToString();
-
 
                             // don't want to increase max angle in hockey or pop pop
                             //if (currentAngle > maxAngle && (Hockey.Instance == null || PopManager.instance != null))
@@ -222,7 +225,9 @@ public class BytesTerminal : MonoBehaviour
                             if (GameManager.Instance != null)
                             {
                                 // update image of current value
+
                                 GameManager.Instance.UpdateCurrentValue(minAngle, currentAngle, maxAngle);
+
 
                                 // check if we've reset
                                 bool hasReset = GameManager.Instance.hasResetToggle != null ? GameManager.Instance.hasResetToggle.isOn : true;
@@ -244,33 +249,36 @@ public class BytesTerminal : MonoBehaviour
                                     thisGamesMaxAngles.Add(maxAngle);
                                 }
                             }
-                            angold = currentAngle;
+
                         }
                         else
                         {
                             q3.transform.rotation = qq2;
+                            //q3.transform.rotation = qq2;
                         }
- 
+
                     }
                 }
 
             }
 
-            //if (t.text.Length > 500)
-            //    t.text = "";
-
-            //convert array of bytes into string
-            ///////////////////////////////
-            //if (labelHeight * messages.Count >= (height - labelHeight))
-            //		scrollPosition.y += labelHeight;//slide the Scrollview down,when the screen filled with messages
-
-            //if (labelHeight * messages.Count >= height * 2)
-            //		messages.RemoveAt (0);//remove old messages,when ScrollView filled
         }
-	
-		//read control data from the Module.
-		controlData = BtConnector.readControlData ();
-	}
+        if (angold == currentAngle && count < 200)
+            count++;
+        else
+            count = 0;
+
+        angold = currentAngle;
+
+        if ((count == 200 && BtConnector.isConnected() && ifcal))//|| (!BtConnector.available()&& BtConnector.isConnected()))
+        {
+            Connect();
+            count = 0;
+        }
+
+        //read control data from the Module.
+        controlData = BtConnector.readControlData();
+    }
 
     public void LoggedIn()
     {
@@ -311,6 +319,7 @@ public class BytesTerminal : MonoBehaviour
         arm.transform.localRotation = diff2;
         v3min = toparm.transform.position - sp.transform.position;
 
+
         ifcal = true;
         UIManager.Instance.setMinToggle.isOn = true;
         if (UIManager.Instance.setMaxToggle.isOn)
@@ -322,6 +331,7 @@ public class BytesTerminal : MonoBehaviour
 
     public void SetMaxPosition()
     {
+
         qq3 = product(divideQbyR(qq2, qq2_0), qq1_0);
         qmax = divideQbyR(qq1, qq3);
         v3max = toparm.transform.position - sp.transform.position;
@@ -340,8 +350,8 @@ public class BytesTerminal : MonoBehaviour
     {
         Quaternion t;
         t.w = (r.w * q.w) - (r.x * q.x) - (r.y * q.y) - (r.z * q.z);
-        t.x= (r.w * q.x) + (r.x * q.w) - (r.y * q.z) + (r.z * q.y);
-        t.y= (r.w * q.y) + (r.x * q.z) + (r.y * q.w) - (r.z * q.x);
+        t.x = (r.w * q.x) + (r.x * q.w) - (r.y * q.z) + (r.z * q.y);
+        t.y = (r.w * q.y) + (r.x * q.z) + (r.y * q.w) - (r.z * q.x);
         t.z = (r.w * q.z) - (r.x * q.y) + (r.y * q.x) + (r.z * q.w);
 
         return t;
@@ -351,10 +361,10 @@ public class BytesTerminal : MonoBehaviour
     {
         Quaternion t;
         float makhraj = (r.w * r.w) + (r.x * r.x) + (r.y * r.y) + (r.z * r.z);
-        t.w = ((r.w * q.w) + (r.x * q.x) + (r.y * q.y) + (r.z * q.z))/makhraj;
-        t.x = ((r.w * q.x) - (r.x * q.w) - (r.y * q.z) + (r.z * q.y))/makhraj;
-        t.y = ((r.w * q.y) + (r.x * q.z) - (r.y * q.w) - (r.z * q.x))/makhraj;
-        t.z = ((r.w * q.z) - (r.x * q.y) + (r.y * q.x) - (r.z * q.w))/makhraj;
+        t.w = ((r.w * q.w) + (r.x * q.x) + (r.y * q.y) + (r.z * q.z)) / makhraj;
+        t.x = ((r.w * q.x) - (r.x * q.w) - (r.y * q.z) + (r.z * q.y)) / makhraj;
+        t.y = ((r.w * q.y) + (r.x * q.z) - (r.y * q.w) - (r.z * q.x)) / makhraj;
+        t.z = ((r.w * q.z) - (r.x * q.y) + (r.y * q.x) - (r.z * q.w)) / makhraj;
 
         return t;
     }
@@ -364,11 +374,15 @@ public class BytesTerminal : MonoBehaviour
         Quaternion t;
         float makhraj = (r.w * r.w) + (r.x * r.x) + (r.y * r.y) + (r.z * r.z);
         t.w = r.w / makhraj;
-        t.x = -1* r.x / makhraj;
+        t.x = -1 * r.x / makhraj;
         t.y = -1 * r.y / makhraj;
-        t.z = -1 * r.z / makhraj; 
+        t.z = -1 * r.z / makhraj;
 
         return t;
+    }
+    float dot(Vector3 a, Vector3 b)
+    {
+        return ((a.x * b.x) + (a.y * b.y) + (a.z * b.z));
     }
 }
 
