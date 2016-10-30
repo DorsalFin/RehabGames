@@ -426,33 +426,76 @@ public class NetworkManager : MonoBehaviour
                     Result topResult = new Result();
                     topResult.game = (string)results[0]["game"];
                     topResult.userId = int.Parse((string)results[0]["user_id"]);
-                    topResult.endTime = results.Count();
+
+                    // end time should be number of days between lowest/highest result
+                    // we set this first
+                    DateTime earliestDate = new DateTime(2099, 1, 1);
+                    DateTime latestDate = new DateTime(1900, 1, 1);
                     float minAction = Mathf.Infinity;
                     float maxAction = 0f;
-
                     foreach (Dictionary<string, object> matchingResult in results)
                     {
-                        if (topResult.game == "basketball")
-                        {
-                            string actionTimesString = (string)matchingResult["action_times"];
-                            if (actionTimesString != "{}")
-                            {
-                                actionTimesString = actionTimesString.TrimStart('{');
-                                actionTimesString = actionTimesString.TrimEnd('}');
-                                int actionCount = actionTimesString.Split(',').Select(t => float.Parse(t)).ToList().Count;
-                                if (actionCount < minAction)
-                                    minAction = actionCount;
-                                if (actionCount > maxAction)
-                                    maxAction = actionCount;
-                            }
-                        }
+                        string createdAtString = (string)matchingResult["created_at"];
+                        DateTime creationDate = DateTime.Parse(createdAtString);
+                        if (DateTime.Compare(creationDate, earliestDate) < 0)
+                            earliestDate = creationDate;
+                        if (DateTime.Compare(creationDate, latestDate) > 0)
+                            latestDate = creationDate;
+
+                        // TODO: scaling on the Y axis
+                        //if (topResult.game == "basketball")
+                        //{
+                        //    // basketball goes by actiontimes (shots made)
+                        //    string actionTimesString = (string)matchingResult["action_times"];
+                        //    if (actionTimesString != "{}")
+                        //    {
+                        //        actionTimesString = actionTimesString.TrimStart('{');
+                        //        actionTimesString = actionTimesString.TrimEnd('}');
+                        //        int actionCount = actionTimesString.Split(',').Select(t => float.Parse(t)).ToList().Count;
+                        //        if (actionCount < minAction)
+                        //            minAction = actionCount;
+                        //        if (actionCount > maxAction)
+                        //            maxAction = actionCount;
+                        //    }
+                        //}
+                        //else if (topResult.game == "hockey")
+                        //{
+                        //    // hockey goes by time
+                        //    float length = float.Parse((string)matchingResult["end_time"]) - float.Parse((string)matchingResult["start_time"]);
+                        //    if (length < minAction)
+                        //        minAction = length;
+                        //    if (length > maxAction)
+                        //        maxAction = length;
+                        //}
+                        //else if (topResult.game == "pop_pop")
+                        //{
+                        //    // pop pop goes by levels, so if there is an entry here we can just add a top result (since it's a record result)
+                        //}
                     }
 
-                    for (int i = 0; i < results.Count(); i++)
-                        topResult.actionTimes.Add(i + 1);
+                    topResult.earliestDate = earliestDate;
+                    topResult.latestDate = latestDate;
+
+                    List<float> actionTimes = new List<float>();
+                    foreach (Dictionary<string, object> matchingResult in results)
+                    {
+                        // add the day of this result for horizontal positioning
+                        string createdAtString = (string)matchingResult["created_at"];
+                        DateTime creationDate = DateTime.Parse(createdAtString);
+                        actionTimes.Add((creationDate - earliestDate).Days);
+                    }
+
+                    // get total amount of days between lowest/highest result
+                    int totalDays = (latestDate - earliestDate).Days;
+                    topResult.endTime = totalDays + 1;
+
+                    actionTimes.Sort();
+                    topResult.actionTimes = actionTimes;
 
                     GraphControl.Instance.AddTopResult(topResult);
                 }
+                else
+                    GraphControl.Instance.playMoreObject.SetActive(true);
 
                 if (!aData.ContainsKey("topResults") && !aData.ContainsKey("recentResults"))
                 {

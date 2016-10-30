@@ -206,7 +206,7 @@ public class Hockey : MonoBehaviour
     {
         bool winner = playerScore == 4;
 
-        if (GameManager.Instance.endTime - GameManager.Instance.startTime > UIManager.Instance.hockeyHighScores[UIManager.Instance.currentDifficulty])
+        if (winner && GameManager.Instance.endTime - GameManager.Instance.startTime > UIManager.Instance.hockeyHighScores[UIManager.Instance.currentDifficulty])
             newRecord = true;
 
         if (newRecord)

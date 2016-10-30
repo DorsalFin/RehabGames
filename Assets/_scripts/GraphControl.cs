@@ -20,6 +20,10 @@ public class Result
     public List<float> inputFrequencies = new List<float>();
     public List<float> inputFrequencyMaximums = new List<float>();
     public DateTime creationDate;
+
+    // these are for the overall progress results
+    public DateTime earliestDate;
+    public DateTime latestDate;
 }
 
 public class GraphControl : MonoBehaviour
@@ -40,6 +44,8 @@ public class GraphControl : MonoBehaviour
     public GameObject zeroPos;
     public Image horizBarImage;
     public Image vertBarImage;
+    public Text horizBarLabelText;
+    public Text horizBarLeftText;
     public Text horizBarExtentText;
     public Text vertBatExtentText;
     public GameObject freqBlip;
@@ -60,6 +66,7 @@ public class GraphControl : MonoBehaviour
     public GameObject topResultsRoot;
     public Transform topResultsParent;
     public GameObject overallButton;
+    public GameObject playMoreObject;
     public GameObject recentResultsRoot;
     public Transform recentResultsParent;
     public Text noResultsText;
@@ -158,6 +165,7 @@ public class GraphControl : MonoBehaviour
     {
         topResult = result;
         overallButton.SetActive(true);
+        playMoreObject.SetActive(false);
     }
 
     public void ClickedTopResult()
@@ -207,6 +215,7 @@ public class GraphControl : MonoBehaviour
         loadingIndicator.SetActive(false);
         topResultsRoot.SetActive(false);
         overallButton.SetActive(false);
+        playMoreObject.SetActive(false);
         recentResultsRoot.SetActive(false);
         noResultsText.text = msg;
         noResultsText.gameObject.SetActive(true);
@@ -301,6 +310,7 @@ public class GraphControl : MonoBehaviour
         loadingIndicator.SetActive(true);
         topResultsRoot.SetActive(false);
         overallButton.SetActive(false);
+        playMoreObject.SetActive(false);
         recentResultsRoot.SetActive(false);
         NetworkManager.Instance.GetResultData(NetworkManager.Instance.currentUserId, username, _selectedGame, -1, ResultsOfGameStored(_selectedGame));
         _lastSearchedName = username;
@@ -370,6 +380,8 @@ public class GraphControl : MonoBehaviour
             downspeed /= ((input_count / 30) - 1);
             downspeed /= horizBySecond;
 
+            horizBarLabelText.text = "time in seconds";
+            horizBarLeftText.text = "0";
             horizBarExtentText.text = totalTime.ToString("00.00");
             vertBatExtentText.text = "Movement domain: " + domain.ToString() + " Deg " +
                                      "-- Initial end angle: " + ((int)(result.inputFrequencyMaximums[0])).ToString() + " Deg " +
@@ -377,6 +389,13 @@ public class GraphControl : MonoBehaviour
                                      "Avarage upward speed:" + upspeed.ToString("0.00") + " Deg/Sec " +
                                      "-- Avarage downward speed:" + downspeed.ToString("0.00") + " Deg/Sec \n " +
                                      "Total rewards: " + totalActions.ToString();
+        }
+        else
+        {
+            horizBarLabelText.text = "time in days";
+            horizBarLeftText.text = result.earliestDate.ToString("MMMM dd, yyyy");
+            horizBarExtentText.text = result.latestDate.ToString("MMMM dd, yyyy");
+            vertBatExtentText.text = "";
         }
 
         if (totalActions > 0)
