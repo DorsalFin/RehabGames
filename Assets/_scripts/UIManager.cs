@@ -42,6 +42,8 @@ public class UIManager : MonoBehaviour
     public Color selectedColour;
     public Color disabledColour;
 
+    public GameObject padlockObject;
+
     public GameObject centerProfileCircle;
     public Text usernameText;
     public Text[] topScoreTexts;
@@ -166,6 +168,11 @@ public class UIManager : MonoBehaviour
             tabButtonLogin.color = disabledColour;
             tabButtonNewUser.color = selectedColour;
         }
+    }
+
+    public void SetAccountExpiredStatus(bool hasExpired)
+    {
+        padlockObject.SetActive(hasExpired);
     }
 
     public void QuitButtonPressed()
@@ -354,6 +361,10 @@ public class UIManager : MonoBehaviour
 
     public void OnDifficultyButtonPressed(GameObject difficultyButton)
     {
+        // don't do anything if account has expired
+        if (NetworkManager.Instance.accountExpiry < DateTime.UtcNow)
+            return;
+
 #if !UNITY_EDITOR
         if (!BytesTerminal.Instance.fullyCalibrated)
         {

@@ -25,7 +25,7 @@ public class Basketball : MonoBehaviour
     public CanvasGroup readyCanvas;
     public Text readyText;
     public Text gameTimeText;
-    public Text shotCountText;
+    public Transform shotCountParent;
 
     public AudioSource AS_back;
     public AudioSource AS_shot;
@@ -134,7 +134,7 @@ public class Basketball : MonoBehaviour
         if (GameManager.Instance.GameInProgress)
         {
             _score++;
-            shotCountText.text = _score.ToString();
+            shotCountParent.transform.GetChild(_score - 1).gameObject.SetActive(true);
             shotTimes.Add(Time.time);
         }
     }

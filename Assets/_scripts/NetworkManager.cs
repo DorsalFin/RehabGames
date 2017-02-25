@@ -16,6 +16,7 @@ public class NetworkManager : MonoBehaviour
     public int currentUserId;
     public string currentUserName;
     public bool isAdmin = false;
+    public DateTime accountExpiry;
 
     /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -362,6 +363,11 @@ public class NetworkManager : MonoBehaviour
                 }
                 currentUserId = user_id;
                 currentUserName = username;
+
+                string expiryString = (string)aData["expiry"];
+                accountExpiry = Convert.ToDateTime(expiryString);
+                UIManager.Instance.SetAccountExpiredStatus(accountExpiry < DateTime.UtcNow);
+
                 UIManager.Instance.LoggedIn(user_id, username);
                 PlayerPrefs.SetInt("auto_login", UIManager.Instance.autoLoginToggle.isOn ? 1 : 0);
 
