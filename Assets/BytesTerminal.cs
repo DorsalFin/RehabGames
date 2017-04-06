@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
@@ -55,6 +55,10 @@ public class BytesTerminal : MonoBehaviour
     int labelHeight;//height of a single label inside the ScrollView
     int height;//ScrollView Height
     float speed;
+
+    bool _pressedConnectButton;
+
+
     void Awake()
     {
         Instance = this;
@@ -593,8 +597,10 @@ public class BytesTerminal : MonoBehaviour
         if (PlayerPrefs.HasKey("lastConnectedDeviceName"))
         {
             deviceNameInput.text = PlayerPrefs.GetString("lastConnectedDeviceName");
+            Debug.Log("lastConnectedDeviceName DETECTED... SETTING TO " + deviceNameInput.text);
             Connect();
         }
+        Debug.Log("NO lastConnectedDeviceName PLAYERPREF EXISTS");
     }
 
     public void ResetValues()
@@ -603,24 +609,37 @@ public class BytesTerminal : MonoBehaviour
         thisGamesMaxAngles.Clear();
     }
 
+    public void ConnectButtonPressed()
+    {
+        Debug.Log("PRESSED CONNECT BUTTON WITH INPUT " + deviceNameInput.text);
+        _pressedConnectButton = true;
+        _lastNameEnteredToConnect = deviceNameInput.text;
+        Connect();
+    }
+
     public void Connect()
     {
-
-
         int result = 0;
+
         if (!BtConnector.isBluetoothEnabled())
         {
+            if (_pressedConnectButton)
+                Debug.Log("BLUETOOTH NOT ENABLED");
+
             BtConnector.askEnableBluetooth();
         }
         else
         {
+            if (_pressedConnectButton)
+                Debug.Log("TRYING TO CONNECT... SETTING _lastNameEnteredToConnect TO " +deviceNameInput.text);
+
             _lastNameEnteredToConnect = deviceNameInput.text;
             BtConnector.moduleName(deviceNameInput.text); //incase User Changed the Bluetooth Name
             result = BtConnector.connect();
         }
 
         connected = BtConnector.isConnected();//check connection status
-
+        _pressedConnectButton = false;
     }
 
     public void SetZeroPosition()
