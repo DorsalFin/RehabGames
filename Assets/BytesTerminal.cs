@@ -360,6 +360,10 @@ public class BytesTerminal : MonoBehaviour
 
                 if (ifcal)
                     UIManager.Instance.notConnectedGameErrorObject.SetActive(false);
+
+                // resume game on regaining bluetooth connection
+                if (GameManager.Instance != null && GameManager.Instance.WaitingForConnection)
+                    GameManager.Instance.DeviceConnectionFound();
             }
             else
             {
@@ -368,10 +372,9 @@ public class BytesTerminal : MonoBehaviour
                 // UIManager.Instance.setMaxToggle.isOn = false;
                 // fullyCalibrated = false;
 
-                // TODO : pause game and allow reconnection
-                if (GameManager.Instance != null)
-                    GameManager.Instance.ExitGame();
-
+                // pause game and allow reconnection if it's running
+                if (GameManager.Instance != null && GameManager.Instance.GameInProgress)
+                    GameManager.Instance.PauseUntilReconnection();
             }
         }
         ////////////////////////////keep 2 way communication//////////////////

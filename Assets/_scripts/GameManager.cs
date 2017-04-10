@@ -28,10 +28,13 @@ public class GameManager : MonoBehaviour
 
     public bool GameInProgress { get { return _gameInProgress; } }
 
+    public bool WaitingForConnection { get { return _waitingOnReconnection; } }
+
     ///////////////////////////////////////////////////////////////////////////////////
 
     bool _gameInProgress;
     bool _fadingIn;
+    bool _waitingOnReconnection;
 
     ///////////////////////////////////////////////////////////////////////////////////
 
@@ -106,6 +109,20 @@ public class GameManager : MonoBehaviour
         _gameInProgress = true;
     }
 
+    public void PauseUntilReconnection()
+    {
+        _gameInProgress = false;
+        _waitingOnReconnection = true;
+        Time.timeScale = 0f;
+    }
+
+    public void DeviceConnectionFound()
+    {
+        _gameInProgress = true;
+        _waitingOnReconnection = false;
+        Time.timeScale = 1f;
+    }
+
     public void Action()
     {
         if (RunningMan.Instance != null)
@@ -166,11 +183,11 @@ public class GameManager : MonoBehaviour
 
     public void ExitGame(bool quitToMenu = true)
     {
-        //if (RunningMan.Instance != null)
-        //    UIManager.Instance.mainCamera.enabled = true;
+        if (RunningMan.Instance != null)
+            UIManager.Instance.mainCamera.enabled = true;
 
         //SceneManager.UnloadScene(GetCurrentGameName());
-        
+
         if (quitToMenu)
             Calibration.Instance.ExitCurrentGame();
 
