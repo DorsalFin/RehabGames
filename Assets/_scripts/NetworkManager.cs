@@ -198,7 +198,7 @@ public class NetworkManager : MonoBehaviour
                 }
                 else
                 {
-                    string responseData = (www.error == null ? " " + System.Text.Encoding.UTF8.GetString(www.bytes) : " ERROR: " + www.error);
+                    string responseData = (www.error == null  || www.error == string.Empty ? " " + System.Text.Encoding.UTF8.GetString(www.bytes) : " ERROR: " + www.error);
                     //Debug.Log ("Response: " + responseData);
                     if (responseData.Contains("you have to let us know which method you want to call"))
                     {
@@ -215,7 +215,7 @@ public class NetworkManager : MonoBehaviour
                             aborted = true;
                         }
                     }
-                    else if (www.error != null)
+                    else if (www.error != null && www.error != string.Empty)
                     {
 	                    Debug.Log("www.error for request " + sMethod + ": " + www.error);
 
@@ -270,7 +270,7 @@ public class NetworkManager : MonoBehaviour
                 debugText = debugText.Substring(0, 256) + "...";
             Debug.Log(debugText);
 
-            if (www.error == null)
+            if (www.error == null || www.error == string.Empty)
             {
                 try
                 {
@@ -364,6 +364,7 @@ public class NetworkManager : MonoBehaviour
                 currentUserId = user_id;
                 currentUserName = username;
 
+                // TODO: handle this... there is no expiryString returned when creating a new user.
                 string expiryString = (string)aData["expiry"];
                 accountExpiry = Convert.ToDateTime(expiryString);
                 UIManager.Instance.SetAccountExpiredStatus(accountExpiry < DateTime.UtcNow);
